@@ -1,0 +1,41 @@
+.sidebar {
+    position: relative;
+    background-color: #1e1e1e;
+    width: 0; /* Transition-friendly */
+    padding: 20px 0; /* Asegurarse de que no haya padding horizontal inicial */
+    height: auto;
+    color: white;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    transition: all 0.5s ease;
+    opacity: 0; /* Esconde el contenido inicialmente */
+  }
+  
+  .sidebar.visible {
+    width: 20vw; /* Transición fluida de ancho */
+    max-width: 200px;
+    opacity: 1; /* Hace visible el contenido */
+    padding: 20px; /* Añade padding horizontal cuando es visible */
+  }
+  
+  .sidebar h3 {
+    margin-bottom: 20px;
+  }
+  
+  .sidebar button {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #3a3a3a;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.3s ease;
+  }
+  
+  .sidebar button:hover {
+    background-color: #4a4a4a;
+  }
