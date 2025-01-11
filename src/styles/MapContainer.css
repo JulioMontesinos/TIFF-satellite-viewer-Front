@@ -51,3 +51,12 @@
   width: 24px;
   height: 24px;
 }
+
+@media (max-width: 768px) {
+
+  .app-container.editing .map-container {
+    width: 100%;
+    height: calc(100vh - 20vh); /* Ajusta la altura dejando espacio para la barra */
+    margin: 0; /* Sin márgenes adicionales */
+  }
+}
