@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Map from "ol/Map";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
@@ -9,6 +9,7 @@ import "../styles/MapContainer.css";
 
 const MapComponent: React.FC = () => {
   const mapElement = useRef<HTMLDivElement | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     const cogUrl = encodeURIComponent(import.meta.env.VITE_COG_URL || "");
@@ -67,7 +68,31 @@ const MapComponent: React.FC = () => {
     return () => map.setTarget(undefined); // Cleanup when unmounting
   }, []);
 
-  return <div ref={mapElement} className="map-container" />;
+  const toggleEditMode = () => {
+    setIsEditing((prev) => !prev);
+  };
+
+  return (
+    <div className={`app-container ${isEditing ? "editing" : ""}`}>
+      {/* Sidebar */}
+      <div className={`sidebar ${isEditing ? "visible" : "hidden"}`}>
+        <h3>Editing Tools</h3>
+        <button>Draw Rectangle</button>
+        <button>Draw Polygon</button>
+        <button>Clear</button>
+      </div>
+
+      {/* Map */}
+      <div
+        className={`map-container`}
+        ref={mapElement}
+      >
+        <button className="brush-button" onClick={toggleEditMode}>
+          <img src="/edit.svg" alt="Edit" className="edit-icon" />
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default MapComponent;
