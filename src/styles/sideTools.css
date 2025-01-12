@@ -27,7 +27,8 @@
   
   .sidebar button {
     display: block;
-    width: 100%;
+    min-width: 150px; /* Ancho mínimo */
+    max-width: 200px;
     margin-bottom: 10px;
     padding: 10px;
     background-color: #3a3a3a;
@@ -35,11 +36,15 @@
     border-radius: 5px;
     color: white;
     cursor: pointer;
-    text-align: left;
+    text-align: center;
     transition: background-color 0.3s ease;
   }
   
   .sidebar button:hover {
+    background-color: #4a4a4a;
+  }
+
+  .sidebar button selected {
     background-color: #4a4a4a;
   }
 

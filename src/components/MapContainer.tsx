@@ -7,16 +7,37 @@ import "ol/ol.css";
 import { fromLonLat } from "ol/proj";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
+import Feature from "ol/Feature";
+import Polygon from "ol/geom/Polygon";
 import SideTools from "../components/drawComponents/SideTools";
 import "../styles/MapContainer.css";
+
+import Style from "ol/style/Style";
+import Stroke from "ol/style/Stroke";
+import Fill from "ol/style/Fill";
 
 const MapComponent: React.FC = () => {
   const mapElement = useRef<HTMLDivElement | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [map, setMap] = useState<Map | null>(null);
-  const vectorLayer = new VectorLayer({
-    source: new VectorSource(),
-  });
+
+  // Persistente fuente de datos
+  const vectorSource = useRef(new VectorSource()); // VectorSource reutilizable
+  const vectorLayer = useRef(
+    new VectorLayer({
+      source: vectorSource.current,
+      zIndex: 2,
+      style: new Style({
+        stroke: new Stroke({
+          color: "rgba(255, 0, 0, 1)", // Color del borde (rojo)
+          width: 2, // Ancho del borde
+        }),
+        fill: new Fill({
+          color: "rgba(255, 255, 255, 0)", // Relleno completamente transparente
+        }),
+      }),
+    })
+  );
 
   useEffect(() => {
     const cogUrl = encodeURIComponent(import.meta.env.VITE_COG_URL || "");
@@ -27,17 +48,19 @@ const MapComponent: React.FC = () => {
       source: new XYZ({
         url: import.meta.env.VITE_BASEMAP_URL || "",
       }),
+      zIndex: 0,
     });
 
     const cogLayer = new TileLayer({
       source: new XYZ({
         url: tilesUrl,
       }),
+      zIndex: 1,
     });
 
     const mapInstance = new Map({
       target: mapElement.current!,
-      layers: [baseLayer, cogLayer, vectorLayer],
+      layers: [baseLayer, cogLayer, vectorLayer.current],
       view: new View({
         center: [0, 0],
         zoom: 3,
@@ -47,6 +70,7 @@ const MapComponent: React.FC = () => {
 
     setMap(mapInstance);
 
+    // Simular recuperación de datos del backend
     fetch(boundsUrl)
       .then((response) => response.json())
       .then((data) => {
@@ -63,7 +87,28 @@ const MapComponent: React.FC = () => {
         }
       });
 
-    return () => mapInstance.setTarget(undefined);
+    // Mock de datos desde el backend para inicializar figuras
+    const mockData = [
+      [
+        [
+          [0, 0],
+          [10e6, 0],
+          [10e6, 10e6],
+          [0, 10e6],
+          [0, 0],
+        ],
+      ], // Coordenadas de un polígono de ejemplo
+    ];
+
+    // Añadir figuras del mock al vectorSource
+    mockData.forEach((coordinates) => {
+      const feature = new Feature({
+        geometry: new Polygon(coordinates),
+      });
+      vectorSource.current.addFeature(feature);
+    });
+
+    return () => mapInstance.setTarget(undefined); // Cleanup
   }, []);
 
   const toggleEditMode = () => {
@@ -73,7 +118,7 @@ const MapComponent: React.FC = () => {
   return (
     <div className={`app-container ${isEditing ? "editing" : ""}`}>
       <div className={`sidebar ${isEditing ? "visible" : ""}`}>
-        <SideTools map={map} vectorLayer={vectorLayer} />
+        <SideTools map={map} vectorLayer={vectorLayer.current} />
       </div>
       <div className="map-container" ref={mapElement}>
         <button className="brush-button" onClick={toggleEditMode}>
