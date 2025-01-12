@@ -74,10 +74,12 @@
   
     .sidebar button {
         display: inline-block; /* Cambia a disposición horizontal */
-        width: auto; /* Ajusta el ancho dinámicamente */
-        padding: 10px 15px; /* Espaciado interno */
-        margin: 0 5px; /* Espaciado entre botones */
-        font-size: 14px; /* Ajusta el tamaño de fuente */
+        /* width: auto; */ /* Ajusta el ancho dinámicamente */
+        min-width: 110px;
+        max-width: 110px;
+        /* padding: 10px 15px; */ /* Espaciado interno */
+        margin: 5px 5px; /* Espaciado entre botones */
+        font-size: 12px; /* Ajusta el tamaño de fuente */
         background-color: #3a3a3a; /* Fondo de los botones */
         border-radius: 5px; /* Bordes redondeados */
         transition: background-color 0.3s ease; /* Transición suave en hover */
@@ -85,5 +87,11 @@
   
     .sidebar button:hover {
       background-color: #4a4a4a;
+    }
+  }
+
+  @media (max-width: 599px) {
+    .sidebar.visible {
+      padding: 20px 20px 5px 0px;
     }
   }

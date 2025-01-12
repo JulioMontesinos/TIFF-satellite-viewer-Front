@@ -7,8 +7,8 @@ import "ol/ol.css";
 import { fromLonLat } from "ol/proj";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
-import Feature from "ol/Feature";
-import Polygon from "ol/geom/Polygon";
+import Feature from "ol/Feature"; //For mockData
+import { getMockFeatures } from "./data/mockData"; //For mockData
 import SideTools from "../components/drawComponents/SideTools";
 import "../styles/MapContainer.css";
 
@@ -87,26 +87,14 @@ const MapComponent: React.FC = () => {
         }
       });
 
-    // Mock de datos desde el backend para inicializar figuras
-    const mockData = [
-      [
-        [
-          [0, 0],
-          [10e6, 0],
-          [10e6, 10e6],
-          [0, 10e6],
-          [0, 0],
-        ],
-      ], // Coordenadas de un polígono de ejemplo
-    ];
-
-    // Añadir figuras del mock al vectorSource
-    mockData.forEach((coordinates) => {
+       // Añadir figuras de prueba desde mockData
+/*     const mockFeatures = getMockFeatures();
+    mockFeatures.forEach((geometry) => {
       const feature = new Feature({
-        geometry: new Polygon(coordinates),
+        geometry,
       });
       vectorSource.current.addFeature(feature);
-    });
+    }); */
 
     return () => mapInstance.setTarget(undefined); // Cleanup
   }, []);

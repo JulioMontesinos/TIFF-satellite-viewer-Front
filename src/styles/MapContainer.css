@@ -57,6 +57,18 @@
   .app-container.editing .map-container {
     width: 100%;
     height: calc(100vh - 20vh); /* Ajusta la altura dejando espacio para la barra */
-    margin: 0; /* Sin márgenes adicionales */
+    margin: 15px 0 0 0;
+  }
+}
+
+@media (max-height: 770px) and (max-width: 768px) {
+  .app-container.editing .map-container {
+    height: calc(100vh - 22vh); /* Ajusta la altura dejando espacio para la barra */
+  }
+}
+
+@media (max-width: 360px){
+  .app-container.editing .map-container {
+    height: calc(100vh - 22vh); /* Ajusta la altura dejando espacio para la barra */
   }
 }
