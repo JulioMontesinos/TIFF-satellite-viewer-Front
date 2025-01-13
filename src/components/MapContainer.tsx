@@ -104,12 +104,8 @@ const MapComponent: React.FC = () => {
         shapesData.forEach((shape: any) => {
           console.log("Processing shape:", shape);
         
-          // Asegúrate de procesar todas las coordenadas del shape
-          const coordinates2D  = shape.coordinates[0].map((coord: number[]) =>
-            fromLonLat([coord[0], coord[1]]) // Solo longitud y latitud
-          );
-        
-          console.log("Coordinates (EPSG:4326):", shape.coordinates[0]);
+          const coordinates2D = shape.coordinates;
+
           console.log("Coordinates (EPSG:3857):", coordinates2D);
         
           const feature = new Feature({

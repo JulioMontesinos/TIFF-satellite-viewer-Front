@@ -3,6 +3,7 @@ import Draw from "ol/interaction/Draw";
 import Map from "ol/Map";
 import VectorLayer from "ol/layer/Vector";
 import Polygon from "ol/geom/Polygon";
+import { createShape } from "../../services/apiService";
 import "../../styles/polygonTool.css";
 
 interface PolygonToolProps {
@@ -28,16 +29,29 @@ const PolygonTool: React.FC<PolygonToolProps> = ({
       type: "Polygon",
     });
 
-    drawInteraction.on("drawend", (event) => {
+    drawInteraction.on("drawend", async (event) => {
       const geometry = event.feature.getGeometry();
       if (geometry instanceof Polygon) {
-        // Si la geometría es un polígono, obtiene las coordenadas
-        const coordinates = geometry.getCoordinates();
-        console.log("Polygon saved:", coordinates);
-        saveToBackend(coordinates);
+        const coordinates3D = geometry.getCoordinates(); // Array tridimensional
+        const coordinates2D = coordinates3D[0]; // Extraer solo el anillo exterior
+        console.log("Polygon saved (2D):", coordinates2D);
+
+
+        // Guarda en el backend
+        try {
+          const savedShape = await createShape({
+            type: "polygon",
+            coordinates: coordinates2D,
+            userId: "12345", // ID de usuario (puede ser dinámico)
+          });
+          console.log("Polygon saved to backend:", savedShape);
+        } catch (error) {
+          console.error("Error saving polygon:", error);
+        }
       } else {
         console.warn("Unexpected geometry type:", geometry?.getType());
       }
+
       // Remove the interaction after the drawing is complete
       map.removeInteraction(drawInteraction);
       onDeactivate();
@@ -46,9 +60,6 @@ const PolygonTool: React.FC<PolygonToolProps> = ({
     map.addInteraction(drawInteraction);
   };
 
-  const saveToBackend = (coordinates: any) => {
-    console.log("Mock save to backend:", coordinates);
-  };
 
   const handleClick = () => {
     onClick(addPolygonInteraction);
