@@ -3,6 +3,7 @@ import Map from "ol/Map";
 import VectorLayer from "ol/layer/Vector";
 import Select from "ol/interaction/Select";
 import { click, pointerMove } from "ol/events/condition";
+import { deleteShape } from "../../services/apiService";
 import Style from "ol/style/Style";
 import Stroke from "ol/style/Stroke";
 import Fill from "ol/style/Fill";
@@ -58,11 +59,27 @@ const ClearTool: React.FC<ClearToolProps> = ({
       layers: [vectorLayer],
     });
 
-    deleteInteraction.on("select", (event) => {
+    deleteInteraction.on("select", async (event) => {
       const selectedFeatures = event.selected;
-      selectedFeatures.forEach((feature) => {
-        vectorLayer.getSource()?.removeFeature(feature);
-      });
+
+      for (const feature of selectedFeatures) {
+        const shapeId = feature.getId(); // Obtén el ID de la figura
+        if (!shapeId) {
+          console.warn("Feature does not have an ID:", feature);
+          continue; // Si no tiene ID, ignóralo
+        }
+
+        try {
+          // Llama al backend para eliminar la figura
+          await deleteShape(String(shapeId));
+          console.log(`Shape with ID ${shapeId} deleted from backend`);
+
+          // Elimina la figura del mapa
+          vectorLayer.getSource()?.removeFeature(feature);
+        } catch (error) {
+          console.error(`Error deleting shape with ID ${shapeId}:`, error);
+        }
+      }
     });
 
     map.addInteraction(selectInteraction);

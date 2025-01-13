@@ -74,6 +74,7 @@ const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer }) => {
         vectorLayer={vectorLayer}
         isSelected={selectedTool === "edit"}
         onClick={(onActivate) => handleToolClick("edit", onActivate)}
+        onSaveComplete={() => setSelectedTool(null)}
       />
       <ClearTool
         map={map}

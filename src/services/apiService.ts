@@ -15,7 +15,18 @@ export const createShape = async (shape: { type: string; coordinates: number[][]
 };
 
 // Eliminar un shape
-export const deleteShape = async (id: string) => {
+export const deleteShape = async (id: string) => { 
   const response = await axios.delete(`${API_URL}/${id}`);
+  return response.data;
+};
+
+// Eliminar todos los shapes
+export const deleteAllShapes = async () => {
+  const response = await axios.delete(API_URL); // Realiza una petición DELETE a la raíz
+  return response.data;
+};
+
+export const updateShape = async (id: string, data: { coordinates: number[][] }) => {
+  const response = await axios.put(`${API_URL}/${id}`, data);
   return response.data;
 };

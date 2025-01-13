@@ -38,7 +38,7 @@ const MapComponent: React.FC = () => {
           width: 2, // Ancho del borde
         }),
         fill: new Fill({
-          color: "rgba(255, 255, 255, 0.1)", // Relleno completamente transparente
+          color: "rgba(255, 255, 255, 0.1)", 
         }),
       }),
     })
@@ -111,6 +111,9 @@ const MapComponent: React.FC = () => {
           const feature = new Feature({
             geometry: new Polygon([coordinates2D ]), // Convierte coordenadas a Polygon
           });
+
+          // Asigna el ID del backend a la feature
+          feature.setId(shape._id);
         
           vectorSource.current.addFeature(feature); // Añade la figura a la capa vectorial
           console.log("Feature added to map:", feature);
