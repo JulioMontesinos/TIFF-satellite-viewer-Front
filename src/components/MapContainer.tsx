@@ -7,9 +7,13 @@ import "ol/ol.css";
 import { fromLonLat } from "ol/proj";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
-import Feature from "ol/Feature"; //For mockData
-import { getMockFeatures } from "./data/mockData"; //For mockData
+import Feature from "ol/Feature";
+import Polygon from "ol/geom/Polygon";
+/* import Feature from "ol/Feature"; 
+import { getMockFeatures } from "./data/mockData";  */
 import SideTools from "../components/drawComponents/SideTools";
+import { getShapes } from "../services/apiService";
+
 import "../styles/MapContainer.css";
 
 import Style from "ol/style/Style";
@@ -20,6 +24,7 @@ const MapComponent: React.FC = () => {
   const mapElement = useRef<HTMLDivElement | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [map, setMap] = useState<Map | null>(null);
+  const [shapes, setShapes] = useState<any[]>([]);
 
   // Persistente fuente de datos
   const vectorSource = useRef(new VectorSource()); // VectorSource reutilizable
@@ -33,7 +38,7 @@ const MapComponent: React.FC = () => {
           width: 2, // Ancho del borde
         }),
         fill: new Fill({
-          color: "rgba(255, 255, 255, 0)", // Relleno completamente transparente
+          color: "rgba(255, 255, 255, 0.1)", // Relleno completamente transparente
         }),
       }),
     })
@@ -70,32 +75,56 @@ const MapComponent: React.FC = () => {
 
     setMap(mapInstance);
 
-    // Simular recuperación de datos del backend
     fetch(boundsUrl)
-      .then((response) => response.json())
-      .then((data) => {
-        if (data && Array.isArray(data.bounds)) {
-          const southwest = fromLonLat([data.bounds[0], data.bounds[1]]);
-          const northeast = fromLonLat([data.bounds[2], data.bounds[3]]);
-          const extent: [number, number, number, number] = [
-            southwest[0],
-            southwest[1],
-            northeast[0],
-            northeast[1],
-          ];
-          mapInstance.getView().fit(extent, { size: mapInstance.getSize(), padding: [20, 20, 20, 20] });
-        }
-      });
+    .then((response) => response.json())
+    .then((data) => {
+      if (data && Array.isArray(data.bounds)) {
+        console.log("Image bounds:", data.bounds);
+        const southwest = fromLonLat([data.bounds[0], data.bounds[1]]);
+        const northeast = fromLonLat([data.bounds[2], data.bounds[3]]);
+        const extent: [number, number, number, number] = [
+          southwest[0],
+          southwest[1],
+          northeast[0],
+          northeast[1],
+        ];
+        mapInstance.getView().fit(extent, { size: mapInstance.getSize(), padding: [20, 20, 20, 20] });
+      }
+    })
+    .catch((err) => console.error("Error fetching bounds:", err));
 
-       // Añadir figuras de prueba desde mockData
-/*     const mockFeatures = getMockFeatures();
-    mockFeatures.forEach((geometry) => {
-      const feature = new Feature({
-        geometry,
-      });
-      vectorSource.current.addFeature(feature);
-    }); */
+    // Obtener figuras reales del backend
+    const fetchShapes = async () => {
+      try {
+        const shapesData = await getShapes(); // Llama a la API
+        console.log("Shapes fetched from backend:", shapesData);
+        setShapes(shapesData); // Actualiza el estado con las figuras
+    
+        // Añadir cada figura al mapa
+        shapesData.forEach((shape: any) => {
+          console.log("Processing shape:", shape);
+        
+          // Asegúrate de procesar todas las coordenadas del shape
+          const coordinates2D  = shape.coordinates[0].map((coord: number[]) =>
+            fromLonLat([coord[0], coord[1]]) // Solo longitud y latitud
+          );
+        
+          console.log("Coordinates (EPSG:4326):", shape.coordinates[0]);
+          console.log("Coordinates (EPSG:3857):", coordinates2D);
+        
+          const feature = new Feature({
+            geometry: new Polygon([coordinates2D ]), // Convierte coordenadas a Polygon
+          });
+        
+          vectorSource.current.addFeature(feature); // Añade la figura a la capa vectorial
+          console.log("Feature added to map:", feature);
+        });
+      } catch (error) {
+        console.error("Error fetching shapes from the backend:", error);
+      }
+    };
 
+    fetchShapes();
     return () => mapInstance.setTarget(undefined); // Cleanup
   }, []);
 
