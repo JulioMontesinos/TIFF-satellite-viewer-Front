@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Map from "ol/Map";
 import VectorLayer from "ol/layer/Vector";
 import Modify from "ol/interaction/Modify";
 import VectorSource from "ol/source/Vector";
 import Polygon from "ol/geom/Polygon";
 import { updateShape } from "../../services/apiService"; // Crear esta función para actualizar el backend
+import { checkShapesExist } from "../../services/shapeService";
+import { syncOriginalFeatures, revertToOriginalState } from "../utils/shapeSyncService";
 import "../../styles/editTool.css";
 
 interface EditToolProps {
@@ -13,6 +15,12 @@ interface EditToolProps {
   isSelected: boolean;
   onClick: (onActivate: () => void) => void;
   onSaveComplete: () => void;
+  showSimpleMessage: (msg: string, type: "warning" | "error" | "successful") => void;
+  showConfirmMessage: (
+    msg: string,
+    onAccept: () => void,
+    onReject?: () => void
+  ) => void;
 }
 
 const EditTool: React.FC<EditToolProps> = ({
@@ -21,8 +29,11 @@ const EditTool: React.FC<EditToolProps> = ({
   isSelected,
   onClick,
   onSaveComplete,
+  showSimpleMessage,
+  showConfirmMessage,
 }) => {
   const [modifiedFeatures, setModifiedFeatures] = useState<any[]>([]);
+  const [originalFeatures, setOriginalFeatures] = useState<any[]>([]);
 
   const addModifyInteraction = () => {
     if (!map || !vectorLayer || !vectorLayer.getSource()) return;
@@ -31,16 +42,34 @@ const EditTool: React.FC<EditToolProps> = ({
       source: vectorLayer.getSource()!,
     });
 
+    // Capturar las modificaciones
+    modifyInteraction.on("modifystart", (event) => {
+      // Sincroniza el estado original al comenzar a editar
+      syncOriginalFeatures(vectorLayer.getSource()!, setOriginalFeatures);
+    });
+
     modifyInteraction.on("modifyend", (event) => {
       const modified = event.features.getArray();
-      console.log("Modified features:", modified);
-
-      // Almacena las modificaciones en el estado
-      setModifiedFeatures(modified.map((feature) => feature));
+    
+      setModifiedFeatures((prevFeatures) => {
+        // Añadir las nuevas figuras modificadas, evitando duplicados
+        const updatedFeatures = [...prevFeatures];
+        modified.forEach((feature) => {
+          if (!updatedFeatures.some((f) => f === feature)) {
+            updatedFeatures.push(feature);
+          }
+        });
+        return updatedFeatures;
+      });
+    
     });
 
     map.addInteraction(modifyInteraction);
   };
+
+/*   useEffect(() => {
+    console.log("Modified features (updated):", modifiedFeatures);
+  }, [modifiedFeatures]); */
 
   const handleSaveChanges = async () => {
     try {
@@ -59,23 +88,45 @@ const EditTool: React.FC<EditToolProps> = ({
           console.log("Saving shape:", { id: shapeId, coordinates });
 
           // Llama al backend para actualizar el shape
-          await updateShape(shapeId, { coordinates });
+          const response = await updateShape(shapeId, { coordinates });
+          if(!response.success)
+            throw new Error("API response indicates failure in some shape");
+          
         }
       }
 
-      console.log("All changes saved.");
+      showSimpleMessage("All changes saved", "successful");
       setModifiedFeatures([]); // Limpia el estado después de guardar
+      setOriginalFeatures([]);
       onSaveComplete();
     } catch (error) {
       console.error("Error saving changes:", error);
     }
   };
 
-  const handleClick = () => {
+  const handleClick = async () => {
+    const shapesExist = await checkShapesExist();
+    if (!shapesExist) {
+      showSimpleMessage("No shapes to edit", "error");
+      onSaveComplete();
+      return;
+    }
+  
     if (isSelected) {
-      handleSaveChanges(); // Guarda los cambios al desactivar la edición
+      // Confirmación solo para guardar los cambios
+      showConfirmMessage(
+        "Do you want to save changes?",
+        async () => await handleSaveChanges(), // Guardar los cambios
+        () => {
+          console.log("User chose not to save changes. Remaining in edit mode.");
+          // No hacer nada; el usuario sigue en modo edición.
+        }
+      );
     } else {
-      onClick(addModifyInteraction);
+      // Activar el modo edición
+      onClick(() => {
+        addModifyInteraction();
+      });
     }
   };
 

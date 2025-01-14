@@ -4,6 +4,7 @@ import VectorLayer from "ol/layer/Vector";
 import Select from "ol/interaction/Select";
 import { click, pointerMove } from "ol/events/condition";
 import { deleteShape } from "../../services/apiService";
+import { checkShapesExist } from "../../services/shapeService";
 import Style from "ol/style/Style";
 import Stroke from "ol/style/Stroke";
 import Fill from "ol/style/Fill";
@@ -14,6 +15,12 @@ interface ClearToolProps {
   vectorLayer: VectorLayer | null;
   isSelected: boolean;
   onClick: (onActivate: () => void) => void;
+  showSimpleMessage: (msg: string, type: "warning" | "error" | "successful") => void;
+  showConfirmMessage: (
+    msg: string,
+    onAccept: () => void,
+    onReject?: () => void
+  ) => void;
 }
 
 const ClearTool: React.FC<ClearToolProps> = ({
@@ -21,6 +28,8 @@ const ClearTool: React.FC<ClearToolProps> = ({
   vectorLayer,
   isSelected,
   onClick,
+  showSimpleMessage,
+  showConfirmMessage
 }) => {
   const addDeleteInteraction = () => {
     if (!map || !vectorLayer) return;
@@ -69,16 +78,29 @@ const ClearTool: React.FC<ClearToolProps> = ({
           continue; // Si no tiene ID, ignóralo
         }
 
-        try {
-          // Llama al backend para eliminar la figura
-          await deleteShape(String(shapeId));
-          console.log(`Shape with ID ${shapeId} deleted from backend`);
-
-          // Elimina la figura del mapa
-          vectorLayer.getSource()?.removeFeature(feature);
-        } catch (error) {
-          console.error(`Error deleting shape with ID ${shapeId}:`, error);
-        }
+        // Mostrar mensaje de confirmación antes de eliminar
+        showConfirmMessage(
+          "Are you sure you want to delete this object?",
+          async () => {
+            try {
+              // Llama al backend para eliminar la figura
+              const response = await deleteShape(String(shapeId));
+              if(response.success){
+                // Elimina la figura del mapa
+                vectorLayer.getSource()?.removeFeature(feature);
+                showSimpleMessage("Shape deleted successfully", "successful");
+            } else {
+                throw new Error("API response indicates failure");
+            }
+            } catch (error) {
+              console.error(`Error deleting shape with ID ${shapeId}:`, error);
+              showSimpleMessage("Error deleting shape", "error");
+            }
+          },
+          () => {
+            console.log("Deletion cancelled.");
+          }
+        );
       }
     });
 
@@ -86,7 +108,12 @@ const ClearTool: React.FC<ClearToolProps> = ({
     map.addInteraction(deleteInteraction);
   };
 
-  const handleClick = () => {
+  const handleClick = async() => {
+    const shapesExist = await checkShapesExist();
+    if (!shapesExist) {
+      showSimpleMessage("No shapes to clear", "error");
+      return;
+    }
     onClick(addDeleteInteraction); // Activa la lógica de selección y eliminación
   };
 

@@ -4,6 +4,8 @@ import Map from "ol/Map";
 import VectorLayer from "ol/layer/Vector";
 import Polygon from "ol/geom/Polygon";
 import { createShape } from "../../services/apiService";
+import { syncOriginalFeatures } from "../utils/shapeSyncService";
+import Feature from "ol/Feature";
 import "../../styles/polygonTool.css";
 
 interface PolygonToolProps {
@@ -12,6 +14,8 @@ interface PolygonToolProps {
   isSelected: boolean;
   onClick: (onActivate: () => void) => void;
   onDeactivate: () => void;
+  showSimpleMessage: (msg: string, type: "warning" | "error" | "successful") => void;
+  setOriginalFeatures: (features: Feature[]) => void;
 }
 
 const PolygonTool: React.FC<PolygonToolProps> = ({
@@ -19,7 +23,9 @@ const PolygonTool: React.FC<PolygonToolProps> = ({
   vectorLayer,
   isSelected,
   onClick,
-  onDeactivate
+  onDeactivate,
+  showSimpleMessage,
+  setOriginalFeatures
 }) => {
   const addPolygonInteraction = () => {
     if (!map || !vectorLayer || !vectorLayer.getSource()) return;
@@ -39,14 +45,29 @@ const PolygonTool: React.FC<PolygonToolProps> = ({
 
         // Guarda en el backend
         try {
-          const savedShape = await createShape({
+          const response = await createShape({
             type: "polygon",
             coordinates: coordinates2D,
             userId: "12345", // ID de usuario (puede ser dinámico)
           });
-          console.log("Polygon saved to backend:", savedShape);
+
+          // Verifica y asigna el ID retornado al feature
+          if (response && response.success && response.shape._id) {
+            event.feature.setId(response.shape._id); // Asigna el ID del backend al feature
+          
+          }else{
+            throw new Error("API response indicates failure");
+          }
+
+          showSimpleMessage("Polygon saved successfully", "successful");
+          // **Actualiza el estado original**
+          syncOriginalFeatures(vectorLayer.getSource()!, (features) => {
+            setOriginalFeatures(features);
+          });
+          
         } catch (error) {
           console.error("Error saving polygon:", error);
+          showSimpleMessage("Error saving polygon", "error");
         }
       } else {
         console.warn("Unexpected geometry type:", geometry?.getType());

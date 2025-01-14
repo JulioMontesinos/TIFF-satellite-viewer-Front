@@ -13,8 +13,12 @@ import Polygon from "ol/geom/Polygon";
 import { getMockFeatures } from "./data/mockData";  */
 import SideTools from "../components/drawComponents/SideTools";
 import { getShapes } from "../services/apiService";
+import { syncOriginalFeatures, revertToOriginalState } from "./utils/shapeSyncService";
+
 
 import "../styles/MapContainer.css";
+import SimpleMessageBar from "../components/utils/SimpleMessageBar";
+import ConfirmMessageBar from "../components/utils/ConfirmMessageBar";
 
 import Style from "ol/style/Style";
 import Stroke from "ol/style/Stroke";
@@ -22,9 +26,43 @@ import Fill from "ol/style/Fill";
 
 const MapComponent: React.FC = () => {
   const mapElement = useRef<HTMLDivElement | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isToolVisible, setIsToolVisible] = useState(false);
+  const [isModeEditing, setIsModeEditing] = useState(false);
+  const [originalFeatures, setOriginalFeatures] = useState<Feature[]>([]);
   const [map, setMap] = useState<Map | null>(null);
   const [shapes, setShapes] = useState<any[]>([]);
+  const [isMessageActive, setIsMessageActive] = useState(false);
+
+  const [simpleMessage, setSimpleMessage] = useState<{
+    text: string;
+    type: "warning" | "error" | "successful" | "confirm";
+  } | null>(null);
+  
+  const [confirmMessage, setConfirmMessage] = useState<{
+    text: string;
+    onAccept: () => void;
+    onReject: () => void;
+  } | null>(null);
+
+  const showSimpleMessage = (text: string, type: "warning" | "error" | "successful" | "confirm") => {
+    if (isMessageActive) return;
+
+    setSimpleMessage({ text, type });
+    setIsMessageActive(true);
+
+    setTimeout(() => {
+      setSimpleMessage(null);
+      setIsMessageActive(false);
+    }, 2000);
+  };
+  
+  const showConfirmMessage = (
+    text: string,
+    onAccept: () => void,
+    onReject?: () => void
+  ) => {
+    setConfirmMessage({ text, onAccept, onReject: onReject || (() => {}) });
+  };
 
   // Persistente fuente de datos
   const vectorSource = useRef(new VectorSource()); // VectorSource reutilizable
@@ -101,7 +139,7 @@ const MapComponent: React.FC = () => {
         setShapes(shapesData); // Actualiza el estado con las figuras
     
         // Añadir cada figura al mapa
-        shapesData.forEach((shape: any) => {
+        shapesData.shapes.forEach((shape: any) => {
           console.log("Processing shape:", shape);
         
           const coordinates2D = shape.coordinates;
@@ -111,12 +149,13 @@ const MapComponent: React.FC = () => {
           const feature = new Feature({
             geometry: new Polygon([coordinates2D ]), // Convierte coordenadas a Polygon
           });
-
+          console.log("El shape es:", shape);
           // Asigna el ID del backend a la feature
           feature.setId(shape._id);
         
           vectorSource.current.addFeature(feature); // Añade la figura a la capa vectorial
           console.log("Feature added to map:", feature);
+          syncOriginalFeatures(vectorSource.current, setOriginalFeatures);
         });
       } catch (error) {
         console.error("Error fetching shapes from the backend:", error);
@@ -127,17 +166,59 @@ const MapComponent: React.FC = () => {
     return () => mapInstance.setTarget(undefined); // Cleanup
   }, []);
 
-  const toggleEditMode = () => {
-    setIsEditing((prev) => !prev);
+  const toggleEditMode = (onAccept: () => void) => {
+    setIsModeEditing((prev) => {
+      if (!prev) {
+        console.log("Entering edit mode...");
+      } else {
+        console.log("Exiting edit mode...");
+      }
+      return !prev;
+    });
+    onAccept();
   };
 
   return (
-    <div className={`app-container ${isEditing ? "editing" : ""}`}>
-      <div className={`sidebar ${isEditing ? "visible" : ""}`}>
-        <SideTools map={map} vectorLayer={vectorLayer.current} />
+    <div className={`app-container ${isToolVisible ? "editing" : ""}`}>
+      <div className={`sidebar ${isToolVisible ? "visible" : ""}`}>
+      <SideTools 
+          map={map} 
+          vectorLayer={vectorLayer.current} 
+          showSimpleMessage={showSimpleMessage} 
+          showConfirmMessage={showConfirmMessage}
+          toggleEditMode={toggleEditMode}
+          setOriginalFeatures={setOriginalFeatures}
+          originalFeatures={originalFeatures}
+          isModeEditing={isModeEditing}
+          setIsModeEditing={setIsModeEditing}
+        />
       </div>
       <div className="map-container" ref={mapElement}>
-        <button className="brush-button" onClick={toggleEditMode}>
+
+      {/* //////////////////////////////////////////////////////////////////// */}
+      {simpleMessage && (
+        <SimpleMessageBar
+          message={simpleMessage.text}
+          type={simpleMessage.type}
+          onDismiss={() => setSimpleMessage(null)}
+        />
+      )}
+      {confirmMessage && (
+        <ConfirmMessageBar
+          message={confirmMessage.text}
+          onAccept={() => {
+            confirmMessage.onAccept();
+            setConfirmMessage(null);
+          }}
+          onReject={() => {
+            confirmMessage.onReject();
+            setConfirmMessage(null);
+          }}
+        />
+      )}
+      {/* //////////////////////////////////////////////////////////////////// */}
+
+        <button className="brush-button" onClick={() => setIsToolVisible(!isToolVisible)}>
           <img src="/edit.svg" alt="Edit" className="edit-icon" />
         </button>
       </div>

@@ -1,0 +1,74 @@
+.message-bar {
+    position: absolute;
+    font-family: 'Arial', sans-serif;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    background-color: #1e1e1e;
+    color: white;
+    border-radius: 20px;
+    font-size: 13px;
+    text-align: center;
+    z-index: 1000; /* Encima de todo */
+    border: 3px solid black; /* QUiero que sea black (Mensaje normal) (Green para exito) (Red para error) de forma dinamico */
+    animation: fadeInOut 2s ease-in-out;
+  }
+
+  .message-bar.successful {
+    border: 3px solid #2e7d32;
+  }
+  
+  .message-bar.error {
+    border: 3px solid #c62828;
+  }
+  
+  .message-bar.warning {
+    border: 3px solid #ef6c00;
+  }
+
+  .message-bar.confirm {
+    border: 3px solid black;
+  }
+  
+  .message-bar .button-group {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+  
+  .accept-button {
+    background-color: green;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  
+  .accept-button:hover {
+    background-color: darkgreen;
+  }
+  
+  .reject-button {
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  
+  .reject-button:hover {
+    background-color: darkred;
+  }
+  
+  @keyframes fadeInOut {
+    0%, 80% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }

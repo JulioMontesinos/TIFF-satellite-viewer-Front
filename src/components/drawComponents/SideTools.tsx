@@ -6,6 +6,8 @@ import PolygonTool from "./PolygonTool";
 import EditTool from "./EditTool";
 import ClearTool from "./ClearTool";
 import ClearAllTool from "./ClearAllTool";
+import {revertToOriginalState} from "../utils/shapeSyncService";
+import Feature from "ol/Feature";
 import "../../styles/sideTools.css";
 
 import Draw from "ol/interaction/Draw";
@@ -15,9 +17,16 @@ import Select from "ol/interaction/Select";
 interface SideToolsProps {
   map: Map | null;
   vectorLayer: VectorLayer | null;
+  showSimpleMessage: (msg: string, type: "warning" | "error" | "successful") => void;
+  showConfirmMessage: (msg: string, onAccept: () => void, onReject?: () => void) => void;
+  toggleEditMode: (onAccept: () => void) => void;
+  setOriginalFeatures: (features: Feature[]) => void; 
+  originalFeatures: Feature[]; 
+  isModeEditing: boolean;
+  setIsModeEditing: (value: boolean) => void;
 }
 
-const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer }) => {
+const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer, showSimpleMessage, showConfirmMessage, toggleEditMode, setOriginalFeatures, originalFeatures, isModeEditing, setIsModeEditing  }) => {
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
 
   const deactivateAllInteractions = () => {
@@ -34,18 +43,61 @@ const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer }) => {
     });
   };
 
+  // Define handleDiscardChanges aquí
+  const handleDiscardChanges = () => {
+    if (vectorLayer && vectorLayer.getSource()) {
+      console.log("Reverting to original state...");
+      revertToOriginalState(vectorLayer.getSource()!, originalFeatures); // Usa revertToOriginalState
+      setOriginalFeatures([]); // Limpia las features originales
+      showSimpleMessage("Changes discarded", "successful"); // Muestra un mensaje de éxito
+    } else {
+      console.warn("VectorLayer or source is not available. Cannot discard changes.");
+    }
+  };
+
   const handleToolClick = (tool: string, onActivate: () => void) => {
+    console.log("Selected tool:", selectedTool);
+    console.log("Clicked tool:", tool);
+    console.log("Is mode editing:", isModeEditing);
+  
+    // Si estás en modo edición y cambias a otra herramienta
+    if (isModeEditing && tool !== "edit") {
+      console.log("Attempting to leave edit mode...");
+      showConfirmMessage(
+        "You are in edit mode with unsaved changes. Do you want to discard them and continue?",
+        () => {
+          console.log("Confirmed: Exiting edit mode.");
+          handleDiscardChanges();
+          setIsModeEditing(false); // Actualiza el estado global del modo edición
+          deactivateAllInteractions();
+          setSelectedTool(tool);
+          onActivate();
+          
+        },
+        () => console.log("Stayed in edit mode.") // Rechazó salir del modo edición
+      );
+      return;
+    }
+  
+    // Si el usuario selecciona la herramienta "edit"
+    if (tool === "edit") {
+      setIsModeEditing(true); // Activar modo edición
+    } else {
+      setIsModeEditing(false); // Salir del modo edición
+    }
+  
     if (selectedTool === tool) {
-      // Si el botón ya estaba seleccionado, desactivar todo
+      console.log("Deactivating current tool:", tool);
       deactivateAllInteractions();
       setSelectedTool(null);
     } else {
-      // Desactivar todas las interacciones antes de activar una nueva
+      console.log("Activating new tool:", tool);
       deactivateAllInteractions();
       setSelectedTool(tool);
       onActivate();
     }
   };
+
 
   const handleDeactivateTool = () => {
     deactivateAllInteractions();
@@ -61,6 +113,8 @@ const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer }) => {
         isSelected={selectedTool === "rectangle"}
         onClick={(onActivate) => handleToolClick("rectangle", onActivate)}
         onDeactivate={handleDeactivateTool}
+        showSimpleMessage={showSimpleMessage}
+        setOriginalFeatures={setOriginalFeatures} 
       />
       <PolygonTool
         map={map}
@@ -68,6 +122,8 @@ const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer }) => {
         isSelected={selectedTool === "polygon"}
         onClick={(onActivate) => handleToolClick("polygon", onActivate)}
         onDeactivate={handleDeactivateTool}
+        showSimpleMessage={showSimpleMessage}
+        setOriginalFeatures={setOriginalFeatures} 
       />
       <EditTool
         map={map}
@@ -75,12 +131,16 @@ const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer }) => {
         isSelected={selectedTool === "edit"}
         onClick={(onActivate) => handleToolClick("edit", onActivate)}
         onSaveComplete={() => setSelectedTool(null)}
+        showSimpleMessage={showSimpleMessage}
+        showConfirmMessage={showConfirmMessage}
       />
       <ClearTool
         map={map}
         vectorLayer={vectorLayer}
         isSelected={selectedTool === "clear"}
         onClick={(onActivate) => handleToolClick("clear", onActivate)}
+        showSimpleMessage={showSimpleMessage}
+        showConfirmMessage={showConfirmMessage}
       />
       <ClearAllTool
         vectorLayer={vectorLayer}
@@ -89,6 +149,8 @@ const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer }) => {
           setSelectedTool(null);
           vectorLayer?.getSource()?.clear();
         }}
+        showSimpleMessage={showSimpleMessage}
+        showConfirmMessage={showConfirmMessage}
       />
     </div>
   );
