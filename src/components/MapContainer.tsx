@@ -17,7 +17,7 @@ import { fetchToken } from "../services/apiService";
 import { syncOriginalFeatures } from "./utils/shapeSyncService";
 
 
-import "../styles/MapContainer.css";
+import "../styles/mapContainer.css";
 import SimpleMessageBar from "../components/utils/SimpleMessageBar";
 import ConfirmMessageBar from "../components/utils/ConfirmMessageBar";
 
