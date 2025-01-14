@@ -32,9 +32,6 @@ const MapComponent: React.FC = () => {
   const [originalFeatures, setOriginalFeatures] = useState<Feature[]>([]);
   const [map, setMap] = useState<Map | null>(null);
 
-  //The warning must to be ignored to production
-  
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [shapes, setShapes] = useState<any[]>([]);
   const [isMessageActive, setIsMessageActive] = useState(false);
 
