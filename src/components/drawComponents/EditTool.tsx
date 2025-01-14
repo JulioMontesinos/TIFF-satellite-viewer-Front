@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Map from "ol/Map";
 import VectorLayer from "ol/layer/Vector";
 import Modify from "ol/interaction/Modify";
@@ -6,7 +6,6 @@ import VectorSource from "ol/source/Vector";
 import Polygon from "ol/geom/Polygon";
 import { updateShape } from "../../services/apiService"; // Crear esta función para actualizar el backend
 import { checkShapesExist } from "../../services/shapeService";
-import { syncOriginalFeatures, revertToOriginalState } from "../utils/shapeSyncService";
 import "../../styles/editTool.css";
 
 interface EditToolProps {
@@ -33,19 +32,12 @@ const EditTool: React.FC<EditToolProps> = ({
   showConfirmMessage,
 }) => {
   const [modifiedFeatures, setModifiedFeatures] = useState<any[]>([]);
-  const [originalFeatures, setOriginalFeatures] = useState<any[]>([]);
 
   const addModifyInteraction = () => {
     if (!map || !vectorLayer || !vectorLayer.getSource()) return;
 
     const modifyInteraction = new Modify({
       source: vectorLayer.getSource()!,
-    });
-
-    // Capturar las modificaciones
-    modifyInteraction.on("modifystart", (event) => {
-      // Sincroniza el estado original al comenzar a editar
-      syncOriginalFeatures(vectorLayer.getSource()!, setOriginalFeatures);
     });
 
     modifyInteraction.on("modifyend", (event) => {
@@ -66,10 +58,6 @@ const EditTool: React.FC<EditToolProps> = ({
 
     map.addInteraction(modifyInteraction);
   };
-
-/*   useEffect(() => {
-    console.log("Modified features (updated):", modifiedFeatures);
-  }, [modifiedFeatures]); */
 
   const handleSaveChanges = async () => {
     try {
@@ -97,7 +85,6 @@ const EditTool: React.FC<EditToolProps> = ({
 
       showSimpleMessage("All changes saved", "successful");
       setModifiedFeatures([]); // Limpia el estado después de guardar
-      setOriginalFeatures([]);
       onSaveComplete();
     } catch (error) {
       console.error("Error saving changes:", error);
@@ -107,7 +94,7 @@ const EditTool: React.FC<EditToolProps> = ({
   const handleClick = async () => {
     const shapesExist = await checkShapesExist();
     if (!shapesExist) {
-      showSimpleMessage("No shapes to edit", "error");
+      showSimpleMessage("No shapes to edit", "warning");
       onSaveComplete();
       return;
     }

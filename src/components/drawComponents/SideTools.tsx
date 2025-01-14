@@ -17,7 +17,7 @@ import Select from "ol/interaction/Select";
 interface SideToolsProps {
   map: Map | null;
   vectorLayer: VectorLayer | null;
-  showSimpleMessage: (msg: string, type: "warning" | "error" | "successful") => void;
+  showSimpleMessage: (msg: string, type: "warning" | "error" | "successful" | "confirm") => void;
   showConfirmMessage: (msg: string, onAccept: () => void, onReject?: () => void) => void;
   toggleEditMode: (onAccept: () => void) => void;
   setOriginalFeatures: (features: Feature[]) => void; 
@@ -46,8 +46,7 @@ const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer, showSimpleMessa
   // Define handleDiscardChanges aquí
   const handleDiscardChanges = () => {
     if (vectorLayer && vectorLayer.getSource()) {
-      console.log("Reverting to original state...");
-      revertToOriginalState(vectorLayer.getSource()!, originalFeatures); // Usa revertToOriginalState
+      revertToOriginalState(vectorLayer.getSource()!, originalFeatures); // To revert original state
       setOriginalFeatures([]); // Limpia las features originales
       showSimpleMessage("Changes discarded", "successful"); // Muestra un mensaje de éxito
     } else {
@@ -56,17 +55,12 @@ const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer, showSimpleMessa
   };
 
   const handleToolClick = (tool: string, onActivate: () => void) => {
-    console.log("Selected tool:", selectedTool);
-    console.log("Clicked tool:", tool);
-    console.log("Is mode editing:", isModeEditing);
-  
+
     // Si estás en modo edición y cambias a otra herramienta
     if (isModeEditing && tool !== "edit") {
-      console.log("Attempting to leave edit mode...");
       showConfirmMessage(
         "You are in edit mode with unsaved changes. Do you want to discard them and continue?",
         () => {
-          console.log("Confirmed: Exiting edit mode.");
           handleDiscardChanges();
           setIsModeEditing(false); // Actualiza el estado global del modo edición
           deactivateAllInteractions();
@@ -74,7 +68,7 @@ const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer, showSimpleMessa
           onActivate();
           
         },
-        () => console.log("Stayed in edit mode.") // Rechazó salir del modo edición
+        () => {} // No hace nada si permanece en la herramienta actual
       );
       return;
     }
@@ -87,11 +81,9 @@ const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer, showSimpleMessa
     }
   
     if (selectedTool === tool) {
-      console.log("Deactivating current tool:", tool);
       deactivateAllInteractions();
       setSelectedTool(null);
     } else {
-      console.log("Activating new tool:", tool);
       deactivateAllInteractions();
       setSelectedTool(tool);
       onActivate();

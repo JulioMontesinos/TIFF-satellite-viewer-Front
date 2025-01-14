@@ -40,8 +40,6 @@ const PolygonTool: React.FC<PolygonToolProps> = ({
       if (geometry instanceof Polygon) {
         const coordinates3D = geometry.getCoordinates(); // Array tridimensional
         const coordinates2D = coordinates3D[0]; // Extraer solo el anillo exterior
-        console.log("Polygon saved (2D):", coordinates2D);
-
 
         // Guarda en el backend
         try {

@@ -15,7 +15,7 @@ interface ClearToolProps {
   vectorLayer: VectorLayer | null;
   isSelected: boolean;
   onClick: (onActivate: () => void) => void;
-  showSimpleMessage: (msg: string, type: "warning" | "error" | "successful") => void;
+  showSimpleMessage: (msg: string, type: "warning" | "error" | "successful" | "confirm") => void;
   showConfirmMessage: (
     msg: string,
     onAccept: () => void,
@@ -89,7 +89,9 @@ const ClearTool: React.FC<ClearToolProps> = ({
                 // Elimina la figura del mapa
                 vectorLayer.getSource()?.removeFeature(feature);
                 showSimpleMessage("Shape deleted successfully", "successful");
+                
             } else {
+                showSimpleMessage("Error deleting shape", "error");
                 throw new Error("API response indicates failure");
             }
             } catch (error) {
@@ -98,7 +100,7 @@ const ClearTool: React.FC<ClearToolProps> = ({
             }
           },
           () => {
-            console.log("Deletion cancelled.");
+            showSimpleMessage("Deletion cancelled", "confirm");
           }
         );
       }
@@ -111,7 +113,7 @@ const ClearTool: React.FC<ClearToolProps> = ({
   const handleClick = async() => {
     const shapesExist = await checkShapesExist();
     if (!shapesExist) {
-      showSimpleMessage("No shapes to clear", "error");
+      showSimpleMessage("No shapes to clear", "warning");
       return;
     }
     onClick(addDeleteInteraction); // Activa la lógica de selección y eliminación

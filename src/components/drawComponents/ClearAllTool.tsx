@@ -7,7 +7,7 @@ import "../../styles/clearAllTool.css";
 interface ClearAllToolProps {
   vectorLayer: VectorLayer | null;
   onClick: () => void;
-  showSimpleMessage: (msg: string, type: "warning" | "error" | "successful") => void;
+  showSimpleMessage: (msg: string, type: "warning" | "error" | "successful" | "confirm") => void;
   showConfirmMessage: (
     msg: string,
     onAccept: () => void,
@@ -24,13 +24,13 @@ const ClearAllTool: React.FC<ClearAllToolProps> = ({ vectorLayer, onClick, showS
         try {
           // Llama a la API para eliminar todos los shapes
           const response = await deleteAllShapes();
-          console.log("RESPONSEEE: ",response);
           // Validación de seguridad: verifica que la respuesta sea exitosa
           if (response.success) {
             // Limpia las figuras del mapa
             vectorLayer?.getSource()?.clear();
             showSimpleMessage("All shapes deleted successfully", "successful");
           } else {
+            showSimpleMessage("Error deleting all shapes", "error");
             throw new Error("API response indicates failure");
           }
         } catch (error) {
@@ -43,7 +43,7 @@ const ClearAllTool: React.FC<ClearAllToolProps> = ({ vectorLayer, onClick, showS
       },
       () => {
         // Acción si se cancela la operación
-        console.log("Clear all operation canceled.");
+        showSimpleMessage("Clear all operation canceled", "confirm");
       }
     );
   };
@@ -51,7 +51,7 @@ const ClearAllTool: React.FC<ClearAllToolProps> = ({ vectorLayer, onClick, showS
   const handleClick = async () => {
     const shapesExist = await checkShapesExist();
     if (!shapesExist) {
-      showSimpleMessage("No shapes to clear", "error");
+      showSimpleMessage("No shapes to clear", "warning");
       return;
     }
     clearAll();

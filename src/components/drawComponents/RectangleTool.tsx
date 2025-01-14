@@ -41,7 +41,6 @@ const RectangleTool: React.FC<RectangleToolProps> = ({
       if (geometry instanceof Polygon) {
         const coordinates3D = geometry.getCoordinates(); // Array tridimensional
         const coordinates2D = coordinates3D[0]; // Extraer solo el anillo exterior
-        console.log("Rectangle saved (2D):", coordinates2D);
 
         // Guarda en el backend
         try {
@@ -64,7 +63,6 @@ const RectangleTool: React.FC<RectangleToolProps> = ({
             throw new Error("API response indicates failure");
           }
 
-          
         } catch (error) {
           console.error("Error saving rectangle:", error);
           showSimpleMessage("Error saving rectangle", "error");
