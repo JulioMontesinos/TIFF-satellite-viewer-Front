@@ -13,6 +13,7 @@ import Polygon from "ol/geom/Polygon";
 import { getMockFeatures } from "./data/mockData";  */
 import SideTools from "../components/drawComponents/SideTools";
 import { getShapes } from "../services/apiService";
+import { fetchToken } from "../services/apiService";
 import { syncOriginalFeatures, revertToOriginalState } from "./utils/shapeSyncService";
 
 
@@ -134,6 +135,9 @@ const MapComponent: React.FC = () => {
     // Obtener figuras reales del backend
     const fetchShapes = async () => {
       try {
+        await fetchToken();
+
+
         const shapesData = await getShapes(); // Llama a la API
         console.log("Shapes fetched from backend:", shapesData);
         setShapes(shapesData); // Actualiza el estado con las figuras
