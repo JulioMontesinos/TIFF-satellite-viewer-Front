@@ -1,10 +1,9 @@
 import axios from "axios";
 import { fetchToken } from "./apiService";
 
-const API_URL = "http://localhost:3000/api/shapes";
 const token = await fetchToken();
+const API_URL = import.meta.env.VITE_API_URL;
 
-// Verificar si existen figuras (contar figuras)
 export const checkShapesExist = async (): Promise<boolean> => {
   try {
     const response = await axios.get(`${API_URL}/count`, {

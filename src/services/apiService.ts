@@ -1,9 +1,8 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:3000/api/shapes";
-const AUTH_URL = "http://localhost:3000/api/auth/token";
-
 let token: string = "";
+const API_URL = import.meta.env.VITE_API_URL;
+const AUTH_URL = import.meta.env.VITE_AUTH_URL;
 
 // Obtener el token dinámico
 export const fetchToken = async (): Promise<string> => {
@@ -11,7 +10,7 @@ export const fetchToken = async (): Promise<string> => {
 
   try {
     const response = await axios.get(AUTH_URL);
-    token = response.data.token || ""; // Asegurarte de que no sea null
+    token = response.data.token || "";
     return token;
   } catch (error) {
     console.error("Error fetching token:", error);

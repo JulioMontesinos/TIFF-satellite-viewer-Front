@@ -76,20 +76,16 @@ const EditTool: React.FC<EditToolProps> = ({
         
         if (geometry instanceof Polygon) {
           const coordinates = geometry.getCoordinates()[0]; // Obtiene solo el anillo exterior
-           // Asegúrate de establecer los IDs en las features al cargarlas
-          console.log("Saving shape:", { id: shapeId, coordinates });
-
           // Llama al backend para actualizar el shape
           const response = await updateShape(shapeId, { coordinates });
           if(!response.success)
             throw new Error("API response indicates failure in some shape");
-          
         }
       }
 
       showSimpleMessage("All changes saved", "successful");
       setModifiedFeatures([]); // Limpia el estado después de guardar
-
+      
       // **ACTUALIZAR originalFeatures** para que sea el NUEVO estado “guardado”
       if (vectorLayer && vectorLayer.getSource()) {
         syncOriginalFeatures(vectorLayer.getSource()!, (features) => {
@@ -118,10 +114,7 @@ const EditTool: React.FC<EditToolProps> = ({
       showConfirmMessage(
         "Do you want to save changes?",
         async () => await handleSaveChanges(), // Guardar los cambios
-        () => {
-          console.log("User chose not to save changes. Remaining in edit mode.");
-          // No hacer nada; el usuario sigue en modo edición.
-        }
+        () => {/* No hacer nada; el usuario sigue en modo edición.*/}
       );
     } else {
       // Activar el modo edición

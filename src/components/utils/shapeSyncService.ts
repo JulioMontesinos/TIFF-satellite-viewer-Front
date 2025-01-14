@@ -12,10 +12,7 @@ export const syncOriginalFeatures = (source: VectorSource, updateState: (feature
 };
 
 // Restaura las features originales en el mapa
-export const revertToOriginalState = (
-  vectorSource: VectorSource, 
-  originalFeatures: Feature[]
-) => {
+export const revertToOriginalState = (vectorSource: VectorSource, originalFeatures: Feature[]) => {
   vectorSource.clear(); // Limpia las features actuales
   originalFeatures.forEach((orig) => {
     const clone = orig.clone();

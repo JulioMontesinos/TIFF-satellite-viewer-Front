@@ -14,7 +14,7 @@ import { getMockFeatures } from "./data/mockData";  */
 import SideTools from "../components/drawComponents/SideTools";
 import { getShapes } from "../services/apiService";
 import { fetchToken } from "../services/apiService";
-import { syncOriginalFeatures, revertToOriginalState } from "./utils/shapeSyncService";
+import { syncOriginalFeatures } from "./utils/shapeSyncService";
 
 
 import "../styles/MapContainer.css";
@@ -118,7 +118,6 @@ const MapComponent: React.FC = () => {
     .then((response) => response.json())
     .then((data) => {
       if (data && Array.isArray(data.bounds)) {
-        console.log("Image bounds:", data.bounds);
         const southwest = fromLonLat([data.bounds[0], data.bounds[1]]);
         const northeast = fromLonLat([data.bounds[2], data.bounds[3]]);
         const extent: [number, number, number, number] = [
@@ -136,29 +135,20 @@ const MapComponent: React.FC = () => {
     const fetchShapes = async () => {
       try {
         await fetchToken();
-
-
         const shapesData = await getShapes(); // Llama a la API
-        console.log("Shapes fetched from backend:", shapesData);
         setShapes(shapesData); // Actualiza el estado con las figuras
     
         // Añadir cada figura al mapa
         shapesData.shapes.forEach((shape: any) => {
-          console.log("Processing shape:", shape);
-        
+  
           const coordinates2D = shape.coordinates;
-
-          console.log("Coordinates (EPSG:3857):", coordinates2D);
-        
           const feature = new Feature({
             geometry: new Polygon([coordinates2D ]), // Convierte coordenadas a Polygon
           });
-          console.log("El shape es:", shape);
           // Asigna el ID del backend a la feature
           feature.setId(shape._id);
         
           vectorSource.current.addFeature(feature); // Añade la figura a la capa vectorial
-          console.log("Feature added to map:", feature);
           syncOriginalFeatures(vectorSource.current, setOriginalFeatures);
         });
       } catch (error) {
@@ -170,18 +160,6 @@ const MapComponent: React.FC = () => {
     return () => mapInstance.setTarget(undefined); // Cleanup
   }, []);
 
-  const toggleEditMode = (onAccept: () => void) => {
-    setIsModeEditing((prev) => {
-      if (!prev) {
-        console.log("Entering edit mode...");
-      } else {
-        console.log("Exiting edit mode...");
-      }
-      return !prev;
-    });
-    onAccept();
-  };
-
   return (
     <div className={`app-container ${isToolVisible ? "editing" : ""}`}>
       <div className={`sidebar ${isToolVisible ? "visible" : ""}`}>
@@ -190,7 +168,6 @@ const MapComponent: React.FC = () => {
           vectorLayer={vectorLayer.current} 
           showSimpleMessage={showSimpleMessage} 
           showConfirmMessage={showConfirmMessage}
-          toggleEditMode={toggleEditMode}
           setOriginalFeatures={setOriginalFeatures}
           originalFeatures={originalFeatures}
           isModeEditing={isModeEditing}

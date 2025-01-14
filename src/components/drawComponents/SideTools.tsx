@@ -19,14 +19,22 @@ interface SideToolsProps {
   vectorLayer: VectorLayer | null;
   showSimpleMessage: (msg: string, type: "warning" | "error" | "successful" | "confirm") => void;
   showConfirmMessage: (msg: string, onAccept: () => void, onReject?: () => void) => void;
-  toggleEditMode: (onAccept: () => void) => void;
   setOriginalFeatures: (features: Feature[]) => void; 
   originalFeatures: Feature[]; 
   isModeEditing: boolean;
   setIsModeEditing: (value: boolean) => void;
 }
 
-const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer, showSimpleMessage, showConfirmMessage, toggleEditMode, setOriginalFeatures, originalFeatures, isModeEditing, setIsModeEditing  }) => {
+const SideTools: React.FC<SideToolsProps> = ({ 
+  map,
+  vectorLayer, 
+  showSimpleMessage, 
+  showConfirmMessage, 
+  setOriginalFeatures, 
+  originalFeatures, 
+  isModeEditing, 
+  setIsModeEditing  
+}) => {
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
 
   const deactivateAllInteractions = () => {

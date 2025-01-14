@@ -18,7 +18,13 @@ interface ClearAllToolProps {
   setOriginalFeatures: (features: Feature[]) => void;
 }
 
-const ClearAllTool: React.FC<ClearAllToolProps> = ({ vectorLayer, onClick, showSimpleMessage, showConfirmMessage, setOriginalFeatures }) => {
+const ClearAllTool: React.FC<ClearAllToolProps> = ({ 
+  vectorLayer, 
+  onClick, 
+  showSimpleMessage, 
+  showConfirmMessage, 
+  setOriginalFeatures 
+}) => {
   const clearAll = async () => {
     
     showConfirmMessage(
