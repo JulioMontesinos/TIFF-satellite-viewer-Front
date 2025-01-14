@@ -5,9 +5,11 @@ import Select from "ol/interaction/Select";
 import { click, pointerMove } from "ol/events/condition";
 import { deleteShape } from "../../services/apiService";
 import { checkShapesExist } from "../../services/shapeService";
+import { syncOriginalFeatures } from "../utils/shapeSyncService";
 import Style from "ol/style/Style";
 import Stroke from "ol/style/Stroke";
 import Fill from "ol/style/Fill";
+import Feature from "ol/Feature";
 import "../../styles/clearTool.css";
 
 interface ClearToolProps {
@@ -21,6 +23,7 @@ interface ClearToolProps {
     onAccept: () => void,
     onReject?: () => void
   ) => void;
+  setOriginalFeatures: (features: Feature[]) => void;
 }
 
 const ClearTool: React.FC<ClearToolProps> = ({
@@ -29,7 +32,8 @@ const ClearTool: React.FC<ClearToolProps> = ({
   isSelected,
   onClick,
   showSimpleMessage,
-  showConfirmMessage
+  showConfirmMessage,
+  setOriginalFeatures
 }) => {
   const addDeleteInteraction = () => {
     if (!map || !vectorLayer) return;
@@ -89,6 +93,13 @@ const ClearTool: React.FC<ClearToolProps> = ({
                 // Elimina la figura del mapa
                 vectorLayer.getSource()?.removeFeature(feature);
                 showSimpleMessage("Shape deleted successfully", "successful");
+                if (vectorLayer && vectorLayer.getSource()) {
+                  syncOriginalFeatures(vectorLayer.getSource()!, (features) => {
+                    setOriginalFeatures(features);
+                  });
+                }else {
+                  console.warn("VectorLayer or source is not available. Cannot discard changes.");
+                }
                 
             } else {
                 showSimpleMessage("Error deleting shape", "error");

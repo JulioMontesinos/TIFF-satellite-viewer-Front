@@ -4,8 +4,10 @@ import VectorLayer from "ol/layer/Vector";
 import Modify from "ol/interaction/Modify";
 import VectorSource from "ol/source/Vector";
 import Polygon from "ol/geom/Polygon";
+import Feature from "ol/Feature";
 import { updateShape } from "../../services/apiService"; // Crear esta función para actualizar el backend
 import { checkShapesExist } from "../../services/shapeService";
+import { syncOriginalFeatures } from "../utils/shapeSyncService";
 import "../../styles/editTool.css";
 
 interface EditToolProps {
@@ -20,6 +22,7 @@ interface EditToolProps {
     onAccept: () => void,
     onReject?: () => void
   ) => void;
+  setOriginalFeatures: (features: Feature[]) => void;
 }
 
 const EditTool: React.FC<EditToolProps> = ({
@@ -30,6 +33,7 @@ const EditTool: React.FC<EditToolProps> = ({
   onSaveComplete,
   showSimpleMessage,
   showConfirmMessage,
+  setOriginalFeatures
 }) => {
   const [modifiedFeatures, setModifiedFeatures] = useState<any[]>([]);
 
@@ -85,6 +89,16 @@ const EditTool: React.FC<EditToolProps> = ({
 
       showSimpleMessage("All changes saved", "successful");
       setModifiedFeatures([]); // Limpia el estado después de guardar
+
+      // **ACTUALIZAR originalFeatures** para que sea el NUEVO estado “guardado”
+      if (vectorLayer && vectorLayer.getSource()) {
+        syncOriginalFeatures(vectorLayer.getSource()!, (features) => {
+          setOriginalFeatures(features);
+        });
+      }else {
+        console.warn("VectorLayer or source is not available. Cannot discard changes.");
+      }
+
       onSaveComplete();
     } catch (error) {
       console.error("Error saving changes:", error);

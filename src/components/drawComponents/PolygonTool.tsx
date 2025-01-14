@@ -59,9 +59,13 @@ const PolygonTool: React.FC<PolygonToolProps> = ({
 
           showSimpleMessage("Polygon saved successfully", "successful");
           // **Actualiza el estado original**
-          syncOriginalFeatures(vectorLayer.getSource()!, (features) => {
-            setOriginalFeatures(features);
-          });
+          if (vectorLayer && vectorLayer.getSource()) {
+            syncOriginalFeatures(vectorLayer.getSource()!, (features) => {
+              setOriginalFeatures(features);
+            });
+          }else {
+            console.warn("VectorLayer or source is not available. Cannot discard changes.");
+          }
           
         } catch (error) {
           console.error("Error saving polygon:", error);

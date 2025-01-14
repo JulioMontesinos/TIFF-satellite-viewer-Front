@@ -47,7 +47,7 @@ const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer, showSimpleMessa
   const handleDiscardChanges = () => {
     if (vectorLayer && vectorLayer.getSource()) {
       revertToOriginalState(vectorLayer.getSource()!, originalFeatures); // To revert original state
-      setOriginalFeatures([]); // Limpia las features originales
+      /* setOriginalFeatures([]); */ // Limpia las features originales
       showSimpleMessage("Changes discarded", "successful"); // Muestra un mensaje de éxito
     } else {
       console.warn("VectorLayer or source is not available. Cannot discard changes.");
@@ -122,9 +122,13 @@ const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer, showSimpleMessa
         vectorLayer={vectorLayer}
         isSelected={selectedTool === "edit"}
         onClick={(onActivate) => handleToolClick("edit", onActivate)}
-        onSaveComplete={() => setSelectedTool(null)}
+        onSaveComplete={() =>{ 
+          setSelectedTool(null);
+          setIsModeEditing(false);
+        }}
         showSimpleMessage={showSimpleMessage}
         showConfirmMessage={showConfirmMessage}
+        setOriginalFeatures={setOriginalFeatures} 
       />
       <ClearTool
         map={map}
@@ -133,6 +137,7 @@ const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer, showSimpleMessa
         onClick={(onActivate) => handleToolClick("clear", onActivate)}
         showSimpleMessage={showSimpleMessage}
         showConfirmMessage={showConfirmMessage}
+        setOriginalFeatures={setOriginalFeatures} 
       />
       <ClearAllTool
         vectorLayer={vectorLayer}
@@ -143,6 +148,7 @@ const SideTools: React.FC<SideToolsProps> = ({ map, vectorLayer, showSimpleMessa
         }}
         showSimpleMessage={showSimpleMessage}
         showConfirmMessage={showConfirmMessage}
+        setOriginalFeatures={setOriginalFeatures} 
       />
     </div>
   );

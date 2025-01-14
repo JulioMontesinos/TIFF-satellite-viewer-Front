@@ -3,9 +3,13 @@ import Feature from "ol/Feature";
 
 // Sincroniza los features actuales en el mapa con el estado original
 export const syncOriginalFeatures = (source: VectorSource, updateState: (features: Feature[]) => void) => {
-    const features = source.getFeatures().map((feature) => feature.clone());
-    updateState(features);
-  };
+  const features = source.getFeatures().map((orig) => {
+    const clone = orig.clone();
+    clone.setId(orig.getId());
+    return clone;
+  });
+  updateState(features);
+};
 
 // Restaura las features originales en el mapa
 export const revertToOriginalState = (
@@ -13,7 +17,11 @@ export const revertToOriginalState = (
   originalFeatures: Feature[]
 ) => {
   vectorSource.clear(); // Limpia las features actuales
-  originalFeatures.forEach((feature) => vectorSource.addFeature(feature.clone())); // Restaura las originales
+  originalFeatures.forEach((orig) => {
+    const clone = orig.clone();
+    clone.setId(orig.getId());   // <-- copiar el ID al clon
+    vectorSource.addFeature(clone);
+  });
 };
 
 export const areCoordinatesEqual = (coords1: number[][], coords2: number[][]): boolean => {

@@ -2,6 +2,8 @@ import React from "react";
 import VectorLayer from "ol/layer/Vector";
 import { deleteAllShapes } from "../../services/apiService"; // Nueva función para eliminar todos los shapes
 import { checkShapesExist } from "../../services/shapeService";
+import { syncOriginalFeatures } from "../utils/shapeSyncService";
+import Feature from "ol/Feature";
 import "../../styles/clearAllTool.css";
 
 interface ClearAllToolProps {
@@ -13,9 +15,10 @@ interface ClearAllToolProps {
     onAccept: () => void,
     onReject?: () => void
   ) => void;
+  setOriginalFeatures: (features: Feature[]) => void;
 }
 
-const ClearAllTool: React.FC<ClearAllToolProps> = ({ vectorLayer, onClick, showSimpleMessage, showConfirmMessage }) => {
+const ClearAllTool: React.FC<ClearAllToolProps> = ({ vectorLayer, onClick, showSimpleMessage, showConfirmMessage, setOriginalFeatures }) => {
   const clearAll = async () => {
     
     showConfirmMessage(
@@ -27,8 +30,16 @@ const ClearAllTool: React.FC<ClearAllToolProps> = ({ vectorLayer, onClick, showS
           // Validación de seguridad: verifica que la respuesta sea exitosa
           if (response.success) {
             // Limpia las figuras del mapa
-            vectorLayer?.getSource()?.clear();
-            showSimpleMessage("All shapes deleted successfully", "successful");
+            if (vectorLayer && vectorLayer.getSource()) {
+              vectorLayer.getSource()?.clear();
+              // Actualiza las originalFeatures
+              syncOriginalFeatures(vectorLayer.getSource()!, (features) => {
+                setOriginalFeatures(features);
+              });
+            }else {
+              console.warn("VectorLayer or source is not available. Cannot discard changes.");
+            }
+
           } else {
             showSimpleMessage("Error deleting all shapes", "error");
             throw new Error("API response indicates failure");
