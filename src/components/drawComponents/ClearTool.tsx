@@ -33,40 +33,40 @@ const ClearTool: React.FC<ClearToolProps> = ({
   onClick,
   showSimpleMessage,
   showConfirmMessage,
-  setOriginalFeatures
+  setOriginalFeatures,
 }) => {
   const addDeleteInteraction = () => {
     if (!map || !vectorLayer) return;
 
     const selectInteraction = new Select({
-      condition: pointerMove, // Detecta al mover el puntero
+      condition: pointerMove, // Detects when the pointer moves
       layers: [vectorLayer],
     });
 
-    // Cambiar el estilo al pasar el puntero
+    // Change style when hovering over a feature
     selectInteraction.on("select", (event) => {
       const hoveredFeatures = event.selected;
       hoveredFeatures.forEach((feature) => {
         feature.setStyle(
           new Style({
             stroke: new Stroke({
-              color: "rgba(255, 165, 0, 1)", // Color naranja brillante para el borde
-              width: 3, // Ancho del borde
+              color: "rgba(255, 165, 0, 1)", // Bright orange border color
+              width: 3, // Border width
             }),
             fill: new Fill({
-              color: "rgba(255, 165, 0, 0.3)", // Relleno naranja semitransparente
+              color: "rgba(255, 165, 0, 0.3)", // Semi-transparent orange fill
             }),
           })
         );
       });
 
-      // Restaurar el estilo cuando el puntero salga de la figura
+      // Restore style when the pointer leaves the feature
       event.deselected.forEach((feature) => {
-        feature.setStyle(undefined) // Reestablece el estilo predeterminado
+        feature.setStyle(undefined); // Reset to default style
       });
     });
 
-    // Interacción para eliminar figuras al hacer clic
+    // Interaction to delete features on click
     const deleteInteraction = new Select({
       condition: click,
       layers: [vectorLayer],
@@ -76,35 +76,34 @@ const ClearTool: React.FC<ClearToolProps> = ({
       const selectedFeatures = event.selected;
 
       for (const feature of selectedFeatures) {
-        const shapeId = feature.getId(); // Obtén el ID de la figura
+        const shapeId = feature.getId(); // Get the feature ID
         if (!shapeId) {
           console.warn("Feature does not have an ID:", feature);
-          continue; // Si no tiene ID, ignóralo
+          continue; // Ignore if no ID is present
         }
 
-        // Mostrar mensaje de confirmación antes de eliminar
+        // Show confirmation message before deleting
         showConfirmMessage(
           "Are you sure you want to delete this object?",
           async () => {
             try {
-              // Llama al backend para eliminar la figura
+              // Call backend to delete the feature
               const response = await deleteShape(String(shapeId));
-              if(response.success){
-                // Elimina la figura del mapa
+              if (response.success) {
+                // Remove the feature from the map
                 vectorLayer.getSource()?.removeFeature(feature);
                 showSimpleMessage("Shape deleted successfully", "successful");
                 if (vectorLayer && vectorLayer.getSource()) {
                   syncOriginalFeatures(vectorLayer.getSource()!, (features) => {
                     setOriginalFeatures(features);
                   });
-                }else {
-                  console.warn("VectorLayer or source is not available. Cannot discard changes.");
+                } else {
+                  console.warn("VectorLayer or source is not available. Cannot sync original features.");
                 }
-                
-            } else {
+              } else {
                 showSimpleMessage("Error deleting shape", "error");
                 throw new Error("API response indicates failure");
-            }
+              }
             } catch (error) {
               console.error(`Error deleting shape with ID ${shapeId}:`, error);
               showSimpleMessage("Error deleting shape", "error");
@@ -121,13 +120,13 @@ const ClearTool: React.FC<ClearToolProps> = ({
     map.addInteraction(deleteInteraction);
   };
 
-  const handleClick = async() => {
+  const handleClick = async () => {
     const shapesExist = await checkShapesExist();
     if (!shapesExist) {
       showSimpleMessage("No shapes to clear", "warning");
       return;
     }
-    onClick(addDeleteInteraction); // Activa la lógica de selección y eliminación
+    onClick(addDeleteInteraction); // Activates the selection and deletion logic
   };
 
   return (

@@ -25,24 +25,24 @@ const RectangleTool: React.FC<RectangleToolProps> = ({
   onClick,
   onDeactivate,
   showSimpleMessage,
-  setOriginalFeatures
+  setOriginalFeatures,
 }) => {
   const addRectangleInteraction = () => {
     if (!map || !vectorLayer || !vectorLayer.getSource()) return;
 
     const drawInteraction = new Draw({
       source: vectorLayer.getSource()!,
-      type: "Circle", // OpenLayers usa "Circle" para rectángulos
+      type: "Circle", // OpenLayers uses "Circle" for rectangles
       geometryFunction: createBox(),
     });
 
     drawInteraction.on("drawend", async (event) => {
       const geometry = event.feature.getGeometry();
       if (geometry instanceof Polygon) {
-        const coordinates3D = geometry.getCoordinates(); // Array tridimensional
-        const coordinates2D = coordinates3D[0]; // Extraer solo el anillo exterior
+        const coordinates3D = geometry.getCoordinates(); // Three-dimensional array
+        const coordinates2D = coordinates3D[0]; // Extract only the outer ring
 
-        // Guarda en el backend
+        // Save to backend
         try {
           const response = await createShape({
             type: "rectangle",
@@ -50,43 +50,40 @@ const RectangleTool: React.FC<RectangleToolProps> = ({
             userId: "12345",
           });
 
-          // Verifica y asigna el ID retornado al feature
+          // Verify and assign the returned ID to the feature
           if (response && response.success && response.shape._id) {
-            event.feature.setId(response.shape._id); // Asigna el ID del backend al feature
+            event.feature.setId(response.shape._id); // Assign the backend ID to the feature
             showSimpleMessage("Rectangle saved successfully", "successful");
-            // **Actualiza el estado original**
+
+            // **Update the original state**
             if (vectorLayer && vectorLayer.getSource()) {
               syncOriginalFeatures(vectorLayer.getSource()!, (features) => {
                 setOriginalFeatures(features);
               });
-            }else {
-              console.warn("VectorLayer or source is not available. Cannot discard changes.");
+            } else {
+              console.warn("VectorLayer or source is not available. Cannot sync original features.");
             }
-          
-          }else{
+          } else {
             throw new Error("API response indicates failure");
           }
-
         } catch (error) {
           console.error("Error saving rectangle:", error);
           showSimpleMessage("Error saving rectangle", "error");
         }
-
       } else {
         console.warn("Unexpected geometry type:", geometry?.getType());
       }
 
-        // Remove the interaction after the drawing is complete
-        map.removeInteraction(drawInteraction);
-        onDeactivate();
-
+      // Remove the interaction after the drawing is complete
+      map.removeInteraction(drawInteraction);
+      onDeactivate();
     });
 
     map.addInteraction(drawInteraction);
   };
 
   const handleClick = () => {
-    onClick(addRectangleInteraction); // Pasa la lógica de activación
+    onClick(addRectangleInteraction); // Pass the activation logic
   };
 
   return (

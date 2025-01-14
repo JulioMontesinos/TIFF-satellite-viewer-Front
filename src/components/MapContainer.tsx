@@ -65,56 +65,57 @@ const MapComponent: React.FC = () => {
     setConfirmMessage({ text, onAccept, onReject: onReject || (() => {}) });
   };
 
-  // Persistente fuente de datos
-  const vectorSource = useRef(new VectorSource()); // VectorSource reutilizable
-  const vectorLayer = useRef(
-    new VectorLayer({
-      source: vectorSource.current,
-      zIndex: 2,
-      style: new Style({
-        stroke: new Stroke({
-          color: "rgba(255, 0, 0, 1)", // Color del borde (rojo)
-          width: 2, // Ancho del borde
-        }),
-        fill: new Fill({
-          color: "rgba(255, 255, 255, 0.1)", 
-        }),
+  // Persistent data source
+const vectorSource = useRef(new VectorSource()); // Reusable VectorSource
+const vectorLayer = useRef(
+  new VectorLayer({
+    source: vectorSource.current,
+    zIndex: 2,
+    style: new Style({
+      stroke: new Stroke({
+        color: "rgba(255, 0, 0, 1)", // Border color (red)
+        width: 2, // Border width
       }),
-    })
-  );
-
-  useEffect(() => {
-    const cogUrl = encodeURIComponent(import.meta.env.VITE_COG_URL || "");
-    const tilesUrl = `${import.meta.env.VITE_TILES_URL}${cogUrl}`;
-    const boundsUrl = `${import.meta.env.VITE_BOUNDS_URL}${cogUrl}`;
-
-    const baseLayer = new TileLayer({
-      source: new XYZ({
-        url: import.meta.env.VITE_BASEMAP_URL || "",
+      fill: new Fill({
+        color: "rgba(255, 255, 255, 0.1)", // Fill color with low opacity
       }),
-      zIndex: 0,
-    });
+    }),
+  })
+);
 
-    const cogLayer = new TileLayer({
-      source: new XYZ({
-        url: tilesUrl,
-      }),
-      zIndex: 1,
-    });
+useEffect(() => {
+  const cogUrl = encodeURIComponent(import.meta.env.VITE_COG_URL || "");
+  const tilesUrl = `${import.meta.env.VITE_TILES_URL}${cogUrl}`;
+  const boundsUrl = `${import.meta.env.VITE_BOUNDS_URL}${cogUrl}`;
 
-    const mapInstance = new Map({
-      target: mapElement.current!,
-      layers: [baseLayer, cogLayer, vectorLayer.current],
-      view: new View({
-        center: [0, 0],
-        zoom: 3,
-        maxZoom: 16,
-      }),
-    });
+  const baseLayer = new TileLayer({
+    source: new XYZ({
+      url: import.meta.env.VITE_BASEMAP_URL || "",
+    }),
+    zIndex: 0,
+  });
 
-    setMap(mapInstance);
+  const cogLayer = new TileLayer({
+    source: new XYZ({
+      url: tilesUrl,
+    }),
+    zIndex: 1,
+  });
 
-    fetch(boundsUrl)
+  const mapInstance = new Map({
+    target: mapElement.current!, // Target the map container
+    layers: [baseLayer, cogLayer, vectorLayer.current], // Add base, cog, and vector layers
+    view: new View({
+      center: [0, 0], // Initial center coordinates
+      zoom: 3, // Initial zoom level
+      maxZoom: 16, // Maximum zoom level
+    }),
+  });
+
+  setMap(mapInstance);
+
+  // Fetch and fit bounds from the backend
+  fetch(boundsUrl)
     .then((response) => response.json())
     .then((data) => {
       if (data && Array.isArray(data.bounds)) {
@@ -131,52 +132,51 @@ const MapComponent: React.FC = () => {
     })
     .catch((err) => console.error("Error fetching bounds:", err));
 
-    // Obtener figuras reales del backend
-    const fetchShapes = async () => {
-      try {
-        await fetchToken();
-        const shapesData = await getShapes(); // Llama a la API
-        setShapes(shapesData); // Actualiza el estado con las figuras
-    
-        // Añadir cada figura al mapa
-        shapesData.shapes.forEach((shape: any) => {
-  
-          const coordinates2D = shape.coordinates;
-          const feature = new Feature({
-            geometry: new Polygon([coordinates2D ]), // Convierte coordenadas a Polygon
-          });
-          // Asigna el ID del backend a la feature
-          feature.setId(shape._id);
-        
-          vectorSource.current.addFeature(feature); // Añade la figura a la capa vectorial
-          syncOriginalFeatures(vectorSource.current, setOriginalFeatures);
+  // Fetch real shapes from the backend
+  const fetchShapes = async () => {
+    try {
+      await fetchToken(); // Ensure a valid token is available
+      const shapesData = await getShapes(); // Call the API
+      setShapes(shapesData); // Update the state with the shapes
+
+      // Add each shape to the map
+      shapesData.shapes.forEach((shape: any) => {
+        const coordinates2D = shape.coordinates;
+        const feature = new Feature({
+          geometry: new Polygon([coordinates2D]), // Convert coordinates to Polygon
         });
-      } catch (error) {
-        console.error("Error fetching shapes from the backend:", error);
-      }
-    };
+        // Assign the backend ID to the feature
+        feature.setId(shape._id);
 
-    fetchShapes();
-    return () => mapInstance.setTarget(undefined); // Cleanup
-  }, []);
+        vectorSource.current.addFeature(feature); // Add the shape to the vector layer
+        syncOriginalFeatures(vectorSource.current, setOriginalFeatures);
+      });
+    } catch (error) {
+      console.error("Error fetching shapes from the backend:", error);
+    }
+  };
 
-  return (
-    <div className={`app-container ${isToolVisible ? "editing" : ""}`}>
-      <div className={`sidebar ${isToolVisible ? "visible" : ""}`}>
+  fetchShapes();
+  return () => mapInstance.setTarget(undefined); // Cleanup when unmounting
+}, []);
+
+return (
+  <div className={`app-container ${isToolVisible ? "editing" : ""}`}>
+    <div className={`sidebar ${isToolVisible ? "visible" : ""}`}>
       <SideTools 
-          map={map} 
-          vectorLayer={vectorLayer.current} 
-          showSimpleMessage={showSimpleMessage} 
-          showConfirmMessage={showConfirmMessage}
-          setOriginalFeatures={setOriginalFeatures}
-          originalFeatures={originalFeatures}
-          isModeEditing={isModeEditing}
-          setIsModeEditing={setIsModeEditing}
-        />
-      </div>
-      <div className="map-container" ref={mapElement}>
+        map={map} 
+        vectorLayer={vectorLayer.current} 
+        showSimpleMessage={showSimpleMessage} 
+        showConfirmMessage={showConfirmMessage}
+        setOriginalFeatures={setOriginalFeatures}
+        originalFeatures={originalFeatures}
+        isModeEditing={isModeEditing}
+        setIsModeEditing={setIsModeEditing}
+      />
+    </div>
+    <div className="map-container" ref={mapElement}>
 
-      {/* //////////////////////////////////////////////////////////////////// */}
+      {/* Simple message notification */}
       {simpleMessage && (
         <SimpleMessageBar
           message={simpleMessage.text}
@@ -184,6 +184,8 @@ const MapComponent: React.FC = () => {
           onDismiss={() => setSimpleMessage(null)}
         />
       )}
+
+      {/* Confirmation message notification */}
       {confirmMessage && (
         <ConfirmMessageBar
           message={confirmMessage.text}
@@ -197,14 +199,13 @@ const MapComponent: React.FC = () => {
           }}
         />
       )}
-      {/* //////////////////////////////////////////////////////////////////// */}
 
-        <button className="brush-button" onClick={() => setIsToolVisible(!isToolVisible)}>
-          <img src="/edit.svg" alt="Edit" className="edit-icon" />
-        </button>
-      </div>
+      <button className="brush-button" onClick={() => setIsToolVisible(!isToolVisible)}>
+        <img src="/edit.svg" alt="Edit" className="edit-icon" />
+      </button>
     </div>
-  );
+  </div>
+);
 };
 
 export default MapComponent;

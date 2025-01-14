@@ -25,7 +25,7 @@ const PolygonTool: React.FC<PolygonToolProps> = ({
   onClick,
   onDeactivate,
   showSimpleMessage,
-  setOriginalFeatures
+  setOriginalFeatures,
 }) => {
   const addPolygonInteraction = () => {
     if (!map || !vectorLayer || !vectorLayer.getSource()) return;
@@ -38,35 +38,34 @@ const PolygonTool: React.FC<PolygonToolProps> = ({
     drawInteraction.on("drawend", async (event) => {
       const geometry = event.feature.getGeometry();
       if (geometry instanceof Polygon) {
-        const coordinates3D = geometry.getCoordinates(); // Array tridimensional
-        const coordinates2D = coordinates3D[0]; // Extraer solo el anillo exterior
+        const coordinates3D = geometry.getCoordinates(); // Three-dimensional array
+        const coordinates2D = coordinates3D[0]; // Extract only the outer ring
 
-        // Guarda en el backend
+        // Save to backend
         try {
           const response = await createShape({
             type: "polygon",
             coordinates: coordinates2D,
-            userId: "12345", // ID de usuario (puede ser dinámico)
+            userId: "12345", // User ID (can be dynamic)
           });
 
-          // Verifica y asigna el ID retornado al feature
+          // Verify and assign the returned ID to the feature
           if (response && response.success && response.shape._id) {
-            event.feature.setId(response.shape._id); // Asigna el ID del backend al feature
-          
-          }else{
+            event.feature.setId(response.shape._id); // Assign the backend ID to the feature
+          } else {
             throw new Error("API response indicates failure");
           }
 
           showSimpleMessage("Polygon saved successfully", "successful");
-          // **Actualiza el estado original**
+
+          // **Update the original state**
           if (vectorLayer && vectorLayer.getSource()) {
             syncOriginalFeatures(vectorLayer.getSource()!, (features) => {
               setOriginalFeatures(features);
             });
-          }else {
-            console.warn("VectorLayer or source is not available. Cannot discard changes.");
+          } else {
+            console.warn("VectorLayer or source is not available. Cannot sync original features.");
           }
-          
         } catch (error) {
           console.error("Error saving polygon:", error);
           showSimpleMessage("Error saving polygon", "error");
@@ -82,7 +81,6 @@ const PolygonTool: React.FC<PolygonToolProps> = ({
 
     map.addInteraction(drawInteraction);
   };
-
 
   const handleClick = () => {
     onClick(addPolygonInteraction);

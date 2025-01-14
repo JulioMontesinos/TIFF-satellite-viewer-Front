@@ -4,22 +4,22 @@ import "../../styles/messageBar.css";
 interface SimpleMessageBarProps {
   message: string;
   type: "warning" | "error" | "successful" | "confirm";
-  duration?: number; // Opcional: Tiempo en milisegundos para mostrar el mensaje
+  duration?: number; // Optional: Time in milliseconds to display the message
   onDismiss: () => void;
 }
 
 const SimpleMessageBar: React.FC<SimpleMessageBarProps> = ({
   message,
   type,
-  duration = 2000, // Tiempo por defecto: 2 segundos
+  duration = 2000, // Default time: 2 seconds
   onDismiss,
 }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
-      onDismiss(); // Ocultar mensaje después de `duration`
+      onDismiss(); // Hide message after `duration`
     }, duration);
 
-    return () => clearTimeout(timer); // Limpieza del temporizador
+    return () => clearTimeout(timer); // Cleanup the timer
   }, [onDismiss, duration]);
 
   return (

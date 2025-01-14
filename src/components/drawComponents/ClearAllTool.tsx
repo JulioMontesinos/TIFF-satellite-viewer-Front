@@ -18,34 +18,32 @@ interface ClearAllToolProps {
   setOriginalFeatures: (features: Feature[]) => void;
 }
 
-const ClearAllTool: React.FC<ClearAllToolProps> = ({ 
-  vectorLayer, 
-  onClick, 
-  showSimpleMessage, 
-  showConfirmMessage, 
-  setOriginalFeatures 
+const ClearAllTool: React.FC<ClearAllToolProps> = ({
+  vectorLayer,
+  onClick,
+  showSimpleMessage,
+  showConfirmMessage,
+  setOriginalFeatures,
 }) => {
   const clearAll = async () => {
-    
     showConfirmMessage(
       "Are you sure you want to delete all shapes? This action cannot be undone.",
       async () => {
         try {
-          // Llama a la API para eliminar todos los shapes
+          // Call the API to delete all shapes
           const response = await deleteAllShapes();
-          // Validación de seguridad: verifica que la respuesta sea exitosa
+          // Safety validation: check if the response is successful
           if (response.success) {
-            // Limpia las figuras del mapa
+            // Clear shapes from the map
             if (vectorLayer && vectorLayer.getSource()) {
               vectorLayer.getSource()?.clear();
-              // Actualiza las originalFeatures
+              // Update originalFeatures
               syncOriginalFeatures(vectorLayer.getSource()!, (features) => {
                 setOriginalFeatures(features);
               });
-            }else {
-              console.warn("VectorLayer or source is not available. Cannot discard changes.");
+            } else {
+              console.warn("VectorLayer or source is not available. Cannot sync original features.");
             }
-
           } else {
             showSimpleMessage("Error deleting all shapes", "error");
             throw new Error("API response indicates failure");
@@ -55,11 +53,11 @@ const ClearAllTool: React.FC<ClearAllToolProps> = ({
           showSimpleMessage("Error deleting all shapes", "error");
         }
 
-        // Finaliza la interacción
+        // End interaction
         onClick();
       },
       () => {
-        // Acción si se cancela la operación
+        // Action if the operation is canceled
         showSimpleMessage("Clear all operation canceled", "confirm");
       }
     );
@@ -72,7 +70,7 @@ const ClearAllTool: React.FC<ClearAllToolProps> = ({
       return;
     }
     clearAll();
-  }
+  };
 
   return (
     <button className="clearAll-button" onClick={handleClick}>

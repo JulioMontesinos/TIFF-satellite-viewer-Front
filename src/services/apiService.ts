@@ -4,9 +4,9 @@ let token: string = "";
 const API_URL = import.meta.env.VITE_API_URL;
 const AUTH_URL = import.meta.env.VITE_AUTH_URL;
 
-// Obtener el token dinámico
+// Fetch the dynamic token
 export const fetchToken = async (): Promise<string> => {
-  if (token) return token; // Si el token ya existe, retornarlo directamente
+  if (token) return token; // If the token already exists, return it directly
 
   try {
     const response = await axios.get(AUTH_URL);
@@ -18,7 +18,7 @@ export const fetchToken = async (): Promise<string> => {
   }
 };
 
-// Obtener todos los shapes
+// Fetch all shapes
 export const getShapes = async () => {
   const response = await axios.get(API_URL, {
     headers: {
@@ -28,7 +28,7 @@ export const getShapes = async () => {
   return response.data;
 };
 
-// Crear un nuevo shape
+// Create a new shape
 export const createShape = async (shape: { type: string; coordinates: number[][]; userId?: string }) => {
   const response = await axios.post(API_URL, shape, {
     headers: {
@@ -38,7 +38,7 @@ export const createShape = async (shape: { type: string; coordinates: number[][]
   return response.data;
 };
 
-// Eliminar un shape
+// Delete a shape
 export const deleteShape = async (id: string) => { 
   const response = await axios.delete(`${API_URL}/${id}`, {
     headers: {
@@ -48,16 +48,17 @@ export const deleteShape = async (id: string) => {
   return response.data;
 };
 
-// Eliminar todos los shapes
+// Delete all shapes
 export const deleteAllShapes = async () => {
   const response = await axios.delete(API_URL, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
-  }); // Realiza una petición DELETE a la raíz
+  }); // Performs a DELETE request to the root
   return response.data;
 };
 
+// Update a shape
 export const updateShape = async (id: string, data: { coordinates: number[][] }) => {
   const response = await axios.put(`${API_URL}/${id}`, data, {
     headers: {

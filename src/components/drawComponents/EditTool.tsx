@@ -39,16 +39,16 @@ const EditTool: React.FC<EditToolProps> = ({
 
   const addModifyInteraction = () => {
     if (!map || !vectorLayer || !vectorLayer.getSource()) return;
-
+  
     const modifyInteraction = new Modify({
       source: vectorLayer.getSource()!,
     });
-
+  
     modifyInteraction.on("modifyend", (event) => {
       const modified = event.features.getArray();
-    
+  
       setModifiedFeatures((prevFeatures) => {
-        // Añadir las nuevas figuras modificadas, evitando duplicados
+        // Add newly modified features, avoiding duplicates
         const updatedFeatures = [...prevFeatures];
         modified.forEach((feature) => {
           if (!updatedFeatures.some((f) => f === feature)) {
@@ -57,50 +57,49 @@ const EditTool: React.FC<EditToolProps> = ({
         });
         return updatedFeatures;
       });
-    
     });
-
+  
     map.addInteraction(modifyInteraction);
   };
-
+  
   const handleSaveChanges = async () => {
     try {
       for (const feature of modifiedFeatures) {
         const geometry = feature.getGeometry();
         const shapeId = feature.getId();
-
+  
         if (!shapeId) {
           console.warn("Feature does not have an ID:", feature);
-          continue; // Ignora las features sin ID
+          continue; // Ignore features without ID
         }
-        
+  
         if (geometry instanceof Polygon) {
-          const coordinates = geometry.getCoordinates()[0]; // Obtiene solo el anillo exterior
-          // Llama al backend para actualizar el shape
+          const coordinates = geometry.getCoordinates()[0]; // Get only the outer ring
+          // Call the backend to update the shape
           const response = await updateShape(shapeId, { coordinates });
-          if(!response.success)
+          if (!response.success)
             throw new Error("API response indicates failure in some shape");
         }
       }
-
+  
       showSimpleMessage("All changes saved", "successful");
-      setModifiedFeatures([]); // Limpia el estado después de guardar
-      
-      // **ACTUALIZAR originalFeatures** para que sea el NUEVO estado “guardado”
+      setModifiedFeatures([]); // Clear the state after saving
+  
+      // **UPDATE originalFeatures** to reflect the NEW "saved" state
       if (vectorLayer && vectorLayer.getSource()) {
         syncOriginalFeatures(vectorLayer.getSource()!, (features) => {
           setOriginalFeatures(features);
         });
-      }else {
-        console.warn("VectorLayer or source is not available. Cannot discard changes.");
+      } else {
+        console.warn("VectorLayer or source is not available. Cannot sync original features.");
       }
-
+  
       onSaveComplete();
     } catch (error) {
       console.error("Error saving changes:", error);
     }
   };
-
+  
   const handleClick = async () => {
     const shapesExist = await checkShapesExist();
     if (!shapesExist) {
@@ -110,20 +109,22 @@ const EditTool: React.FC<EditToolProps> = ({
     }
   
     if (isSelected) {
-      // Confirmación solo para guardar los cambios
+      // Confirm only for saving changes
       showConfirmMessage(
         "Do you want to save changes?",
-        async () => await handleSaveChanges(), // Guardar los cambios
-        () => {/* No hacer nada; el usuario sigue en modo edición.*/}
+        async () => await handleSaveChanges(), // Save the changes
+        () => {
+          /* Do nothing; the user remains in edit mode. */
+        }
       );
     } else {
-      // Activar el modo edición
+      // Activate edit mode
       onClick(() => {
         addModifyInteraction();
       });
     }
   };
-
+  
   return (
     <button
       className={`edit-button ${isSelected ? "selected" : ""}`}
@@ -133,5 +134,5 @@ const EditTool: React.FC<EditToolProps> = ({
     </button>
   );
 };
-
-export default EditTool;
+  
+  export default EditTool;
