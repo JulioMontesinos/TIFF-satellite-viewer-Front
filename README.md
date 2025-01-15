@@ -4,6 +4,8 @@ This project is a web application designed for managing and visualizing shapes o
 
 Production URL:
 https://tiff-satellite-viewer-front.vercel.app
+
+![Map1](https://github.com/user-attachments/assets/f2a0e7cb-9f16-43dc-bc02-a64871bd3270)
 ________________
 
 ## Features
